@@ -1,0 +1,84 @@
+Arduino code : 
+
+in the text form also  - const int trigpin = 4;
+const int echopin = 5;
+
+int readfrom_ultrasonic()
+{
+  long duration;
+  int distance;
+
+  digitalWrite(trigpin, LOW);
+  delayMicroseconds(5);
+  digitalWrite(trigpin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigpin, LOW);
+
+  duration = pulseIn(echopin, HIGH);
+  distance = duration * 0.034/2;
+
+  return distance;
+   
+}
+void setup() 
+{
+  pinMode(trigpin, OUTPUT);
+  pinMode(echopin, INPUT);
+  Serial.begin(9600);
+
+}
+
+void loop() 
+{
+  Serial.print("Distance: ");
+  Serial.print(readfrom_ultrasonic());
+  delay(1000);
+}
+
+
+Python code P1 :
+
+import serial
+import csv
+from datetime import datetime
+
+s = serial.Serial('COM5', 9600, timeout=2)
+
+filename = "ultrasoinc_sensor.csv"
+with open(filename, 'a', newline = '') as file:
+    writer = csv.writer(file)
+    writer.writerow({"Time", "Distance in (cm)"})
+
+    try:
+        while True:
+            if s.in_waiting > 0:
+                distance = s.readline().decode('utf-8').strip()
+                timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+                writer.writerow({timestamp, distance})
+                print(f"Information: {timestamp} : {Distance} cm" )
+    except KeyboardInterrupt:
+        print("Stopped")
+        s.close()
+
+python code P2 :
+
+import pandas as pd
+import matplotlib.pyplot as plt
+
+filename - "ultrasonic_sensor.csv"
+df = pd.read_csv(filename)
+
+df['Timestamp'] = pd.to_datetime(df['Time'], format="%Y%m%d%H%M%S")
+
+df['Distance in (cm)'] = df['Distance in (cm)'].astype(str).str.extract(r'(\d+)')
+
+df['Smoothed_distance'] = df['Distance in (cm)'].rolling(window=5, min_periods=1).mean()
+
+plt.figure(figsize=(12,6))
+plt.plot(df['Timestamp'], df['Smoothed_distance'], markersize=1, linestyle='-', color = 'b')
+plt.xlabel('Time')
+plt,ylabel('Distance (cm)')
+plt.title('Ultrasonic Sensor Readings (Smoothed)')
+plt.xticks(rotation=45)
+plt.grid(True)
+plt.show
